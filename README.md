@@ -1,12 +1,16 @@
 # Roboflow Homepage Demo
 
-This repository contains the code used to power the inference widget on the [Roboflow](https://roboflow.com) homepage.
+This repository contains the code used to power the inference widget on the [Roboflow](https://roboflow.com) homepage, with some changes to make it more generic.
 
 The web page in this repository supports running a model hosted on Roboflow by:
 
 1. Using your webcam to run inference.
 2. Selecting from a predefined image to run inference.
 3. Uploading an image to run inference.
+
+## Project Screenshot
+
+![Roboflow Homepage Demo screenshot showing inference on an image of a baseball scene](screenshot.png)
 
 ## Use This Project
 
