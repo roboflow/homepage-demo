@@ -30,6 +30,20 @@ To find your model name and version number, go to the Deploy tab associated with
 
 ![Model Name and Version Number](model-name-version.png)
 
+### Deploy to GitHub Pages
+
+You can deploy this project to GitHub pages to host your project online.
+
+To do so:
+
+1. Click "Use this template" and follow the instructions to create a copy of this repository in your own GitHub account.
+2. Go to the Settings tab of your repository.
+3. Click "Pages" in the sidebar.
+4. Select "main" as the branch from which to deploy.
+5. Click "Save".
+
+Your project will now be hosted at `https://<your-github-username>.github.io/<your-repository-name>/index.html`.
+
 ## Technology Stack
 
 - JavaScript
