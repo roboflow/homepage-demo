@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width" />
         <title>Roboflow Homepage Demo</title>
         <link href="./style.css" rel="stylesheet" type="text/css" />
-        <script src="https://cdn.roboflow.com/0.2.25/roboflow.js" async></script>
+        <script src="https://cdn.roboflow.com/0.2.25/roboflow.js"></script>
     </head>
 
     <body>
@@ -24,6 +24,7 @@
             <source
                 src="https://uploads-ssl.webflow.com/5f6bc60e665f54545a1e52a5/63d15cb160518f7f9c59a892_Sequence 01-transcode.mp4"
                 type="video/mp4"
+                id="video_source"
             />
             </video>
         </div>
@@ -61,6 +62,9 @@
         <a href="#" id="image-predict" class="hero_button_secondary"
             >Predict Using Image</a
         >
-        <script src="script.js" defer></script>
+
+        <select id="model-select">
+        </select>
+        <script src="script.js"></script>
     </body>
 </html>

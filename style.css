@@ -60,4 +60,16 @@ h1 {
   border-radius: 16px;
   margin: 10px;
   cursor: pointer;
+  max-height: 75px;
+  height: 75px;
+}
+#model-select {
+  background-color: #5400ec;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px;
+  margin: 10px;
+  font-size: 16px;
+  border-right: 10px solid transparent;
 }
