@@ -232,7 +232,7 @@ function setImageState(src, canvas = "picture_canvas") {
     img.height = height;
     img.width = width;
     img.onload = function () {
-    ctx.drawImage(img, 0, 0, width, height);
+    ctx.drawImage(img, 0, 0, width, height, 0, 0, width, height);
     };
 }
 
