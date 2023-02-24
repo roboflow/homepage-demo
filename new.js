@@ -27,7 +27,7 @@ var color_choices = [
 
 var available_models = {
     "microsoft-coco": {
-        "name": "Common Objects",
+        "name": "Microsoft COCO",
         "version": 9,
         "video": "",
         "confidence": 0.6,
@@ -92,6 +92,7 @@ for (var item in available_models) {
 
 var current_model_name = "microsoft-coco";
 const API_KEY = "rf_U7AD2Mxh39N7jQ3B6cP8xAyufLH3";
+const DETECT_API_KEY = "4l5zOVomQmkAqlTJPVKN";
 var current_model_version = 9;
 var webcamLoop = false;
 
@@ -110,7 +111,7 @@ async function apiRequest (image) {
     var version = available_models[current_model_name]["version"];
     var name = current_model_name;
 
-    var url = "https://detect.roboflow.com/microsoft-coco/9?api_key=4l5zOVomQmkAqlTJPVKN";
+    var url = "https://detect.roboflow.com/" + name + "/" + version + "?api_key=" + DETECT_API_KEY;
     
     // no cors
     return fetch(url, {
@@ -129,12 +130,6 @@ async function getModel() {
     // if (available_models[current_model_name]["model"] != null) {
     //     return available_models[current_model_name]["model"];
     // }
-
-    if (model != null) {
-        model.teardown();
-        console.log("tearing down model");
-    }
-
 
     var model = await roboflow
     .auth({
@@ -184,8 +179,12 @@ document
 var bounding_box_colors = {};
 
 function switchModel() {
+    console.log("switching model");
+    console.log(current_model_name);
     current_model_name = document.getElementById("model-select").value;
     current_model_version = available_models[current_model_name]["version"];
+
+    console.log(current_model_name);
 
     // change prechosen_images_parent srcs
     var prechosen_images = document.getElementById(
@@ -196,6 +195,13 @@ function switchModel() {
 
     for (var i = 0; i < prechosen_images.length; i++) {
         prechosen_images[i].src = available_models[current_model_name]["imageGrid"][i];
+    }
+
+    // hide webcam button if model is not microsoft-coco
+    if (current_model_name != "microsoft-coco") {
+        document.getElementById("webcam-predict").style.display = "none";
+    } else {
+        document.getElementById("webcam-predict").style.display = "inline";
     }
 
     // change video to use new one
