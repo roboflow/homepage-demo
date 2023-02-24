@@ -377,13 +377,16 @@ function webcamInference() {
             "loadeddata",
             function () {
             var loopID = setInterval(function () {
+        
+                var [sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight, scalingRatio] =
+                getCoordinates(img);
                 model.then(function (model) {
                 model.detect(video).then(function (predictions) {
                     ctx.drawImage(video, 0, 0, width, height, 0, 0, width, height);
 
                     ctx.beginPath();
 
-                    drawBoundingBoxes(predictions, canvas, ctx, 1, 0, 0);
+                    drawBoundingBoxes(predictions, canvas, ctx, scalingRatio, sx, sy);
             
                     if (!webcamLoop) {
                         clearInterval(loopID);
