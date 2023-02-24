@@ -239,6 +239,7 @@ function setImageState(src, canvas = "picture_canvas") {
 function drawBoundingBoxes(predictions, canvas, ctx, scalingRatio, sx, sy, fromDetectAPI = false) {
     for (var i = 0; i < predictions.length; i++) {
     var confidence = predictions[i].confidence;
+    ctx.scale(1, 1);
 
     if (predictions[i].class in bounding_box_colors) {
         ctx.strokeStyle = bounding_box_colors[predictions[i].class];
