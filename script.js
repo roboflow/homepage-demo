@@ -27,7 +27,7 @@ var color_choices = [
 
 var available_models = {
     "microsoft-coco": {
-        "name": "Common Objects",
+        "name": "Microsoft COCO",
         "version": 9,
         "video": "",
         "confidence": 0.6,
@@ -91,14 +91,45 @@ for (var item in available_models) {
 }
 
 var current_model_name = "microsoft-coco";
-const API_KEY = "";
+const API_KEY = "rf_U7AD2Mxh39N7jQ3B6cP8xAyufLH3";
+const DETECT_API_KEY = "4l5zOVomQmkAqlTJPVKN";
 var current_model_version = 9;
 var webcamLoop = false;
 
-async function getModel() {
-    if (available_models[current_model_name]["model"] != null) {
-        return available_models[current_model_name]["model"];
+// when user scrolls past #model-select, stop webcam
+window.addEventListener("scroll", function() {
+    if (window.scrollY > 100) {
+        webcamLoop = false;
     }
+    // if comes back up, start webcam
+    if (window.scrollY < 100) {
+        webcamLoop = true;
+    }
+});
+
+async function apiRequest (image) {
+    var version = available_models[current_model_name]["version"];
+    var name = current_model_name;
+
+    var url = "https://detect.roboflow.com/" + name + "/" + version + "?api_key=" + DETECT_API_KEY;
+    
+    // no cors
+    return fetch(url, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: image,
+        //mode: "no-cors",
+        redirect: "follow",
+    }).then((response) => response.json()
+    ).then(resJson => { return resJson["predictions"] });
+}
+
+async function getModel() {
+    // if (available_models[current_model_name]["model"] != null) {
+    //     return available_models[current_model_name]["model"];
+    // }
 
     var model = await roboflow
     .auth({
@@ -111,12 +142,14 @@ async function getModel() {
 
     model.configure({
         threshold: available_models[current_model_name]["confidence"],
-        max_objects: 100
+        max_objects: 50
     });
 
     // document.getElementById("video_source").src = available_models[current_model_name]["video"];
     // document.getElementById("video").load();
     // document.getElementById("video").play();
+
+    // available_models[current_model_name]["model"] = model;
 
     return model;
 }
@@ -160,9 +193,16 @@ function switchModel() {
         prechosen_images[i].src = available_models[current_model_name]["imageGrid"][i];
     }
 
+    // hide webcam button if model is not microsoft-coco
+    if (current_model_name != "microsoft-coco") {
+        document.getElementById("webcam-predict").style.display = "none";
+    } else {
+        document.getElementById("webcam-predict").style.display = "inline";
+    }
+
     // change video to use new one
-    var video = document.getElementById("video_source");
-    video.src = available_models[current_model_name]["video"];
+    // var video = document.getElementById("video_source");
+    // video.src = available_models[current_model_name]["video"];
 
     if (webcamLoop) {
         setImageState(
@@ -188,15 +228,14 @@ function setImageState(src, canvas = "picture_canvas") {
     img.height = height;
     img.width = width;
     img.onload = function () {
-    ctx.drawImage(img, 0, 0, width, height);
+    ctx.drawImage(img, 0, 0, width, height, 0, 0, width, height);
     };
 }
 
-function drawBoundingBoxes(predictions, canvas, ctx, scalingRatio, sx, sy) {
-    console.log("predictions", predictions);
+function drawBoundingBoxes(predictions, canvas, ctx, scalingRatio, sx, sy, fromDetectAPI = false) {
     for (var i = 0; i < predictions.length; i++) {
     var confidence = predictions[i].confidence;
-    console.log("confidence", confidence);
+    ctx.scale(1, 1);
 
     if (predictions[i].class in bounding_box_colors) {
         ctx.strokeStyle = bounding_box_colors[predictions[i].class];
@@ -211,26 +250,21 @@ function drawBoundingBoxes(predictions, canvas, ctx, scalingRatio, sx, sy) {
         bounding_box_colors[predictions[i].class] = color;
     }
 
-    var rect = canvas.getBoundingClientRect();
-
     var prediction = predictions[i];
     var x = prediction.bbox.x - prediction.bbox.width / 2;
     var y = prediction.bbox.y - prediction.bbox.height / 2;
     var width = prediction.bbox.width;
     var height = prediction.bbox.height;
 
-    x -= sx;
-    y -= sy;
+    if (!fromDetectAPI) {
+        x -= sx;
+        y -= sy;
 
-    x *= scalingRatio;
-    y *= scalingRatio;
-    width *= scalingRatio;
-    height *= scalingRatio;
-
-    // if box is fully outside 640x480, skip it
-    // if (x > width || y > height || x + width < 0 || y + height < 0) {
-    //     continue;
-    // }
+        x *= scalingRatio;
+        y *= scalingRatio;
+        width *= scalingRatio;
+        height *= scalingRatio;
+    }
 
     // if box is partially outside 640x480, clip it
     if (x < 0) {
@@ -242,6 +276,9 @@ function drawBoundingBoxes(predictions, canvas, ctx, scalingRatio, sx, sy) {
         height += y;
         y = 0;
     }
+
+    // if first prediction, double label size
+
 
     ctx.rect(x, y, width, width);
 
@@ -255,13 +292,27 @@ function drawBoundingBoxes(predictions, canvas, ctx, scalingRatio, sx, sy) {
     var text = ctx.measureText(
         prediction.class + " " + Math.round(confidence * 100) + "%"
     );
+    // if (i == 0) {
+    //     text.width *= 2;
+    // }
+
+    // set x y fill text to be within canvas x y, even if x is outside
+    // if (y < 0) {
+    //     y = -40;
+    // }
+    if (y < 20) {
+        y = 30
+    }
+
+    // make sure label doesn't leave canvas
 
     ctx.fillStyle = ctx.strokeStyle;
-    ctx.fillRect(x - 2, y - 30, text.width + 10, 30);
+    ctx.fillRect(x - 2, y - 30, text.width + 4, 30);
     // use monospace font
     ctx.font = "15px monospace";
     // use black text
     ctx.fillStyle = "black";
+
     ctx.fillText(
         prediction.class + " " + Math.round(confidence * 100) + "%",
         x,
@@ -313,24 +364,29 @@ function webcamInference() {
         var canvas = document.getElementById("video_canvas");
         var ctx = canvas.getContext("2d");
 
+        ctx.scale(1, 1);
+
         video.addEventListener(
             "loadeddata",
             function () {
             var loopID = setInterval(function () {
+        
+                var [sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight, scalingRatio] =
+                getCoordinates(video);
                 model.then(function (model) {
                 model.detect(video).then(function (predictions) {
-                    ctx.drawImage(video, 0, 0, width, height);
+                    ctx.drawImage(video, 0, 0, width, height, 0, 0, width, height);
 
                     ctx.beginPath();
 
-                    drawBoundingBoxes(predictions, canvas, ctx, 1, 0, 0);
+                    drawBoundingBoxes(predictions, canvas, ctx, scalingRatio, sx, sy);
             
                     if (!webcamLoop) {
                         clearInterval(loopID);
                     }
                 });
                 });
-            }, 1000 / 100);},
+            }, 1000 / 30);},
             false
         );
         })
@@ -357,23 +413,21 @@ function getCoordinates(img) {
     var imageWidth = img.width;
     var imageHeight = img.height;
 
-    console.log(imageWidth, imageHeight);
-
     const canvasRatio = dWidth / dHeight;
     const imageRatio = imageWidth / imageHeight;
 
     // scenario 1 - image is more vertical than canvas
     if (canvasRatio >= imageRatio) {
-    var sx = 0;
-    var sWidth = imageWidth;
-    var sHeight = sWidth / canvasRatio;
-    var sy = (imageHeight - sHeight) / 2;
+        var sx = 0;
+        var sWidth = imageWidth;
+        var sHeight = sWidth / canvasRatio;
+        var sy = (imageHeight - sHeight) / 2;
     } else {
     // scenario 2 - image is more horizontal than canvas
-    var sy = 0;
-    var sHeight = imageHeight;
-    var sWidth = sHeight * canvasRatio;
-    var sx = (imageWidth - sWidth) / 2;
+        var sy = 0;
+        var sHeight = imageHeight;
+        var sWidth = sHeight * canvasRatio;
+        var sx = (imageWidth - sWidth) / 2;
     }
 
     var scalingRatio = dWidth / sWidth;
@@ -381,8 +435,6 @@ function getCoordinates(img) {
     if (scalingRatio == Infinity) {
         scalingRatio = 1;
     }
-
-    console.log(sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight, scalingRatio);
 
     return [sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight, scalingRatio];
 }
@@ -408,16 +460,18 @@ function imageInference(e) {
 
     ctx.drawImage(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
 
-    // if no model, load it
-    if (model == null) {
-        model = getModel();
-    }
+    var base64 = canvas.toDataURL("image/jpeg", 1.0);
 
-    model.then(function (model) {
-        model.detect(img).then(function (predictions) {
+    apiRequest(base64).then(function (predictions) {
         ctx.beginPath();
-        drawBoundingBoxes(predictions, canvas, ctx, scalingRatio, sx, sy);
-        });
+        var predictions = predictions.map(function (prediction) {
+        return {
+            bbox: { x: prediction.x, y: prediction.y, width: prediction.width, height: prediction.height},
+            class: prediction.class,
+            confidence: prediction.confidence,
+        }});
+
+        drawBoundingBoxes(predictions, canvas, ctx, scalingRatio, sx, sy, true);
     });
     };
 }
