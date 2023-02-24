@@ -370,6 +370,8 @@ function webcamInference() {
         var canvas = document.getElementById("video_canvas");
         var ctx = canvas.getContext("2d");
 
+        ctx.scale(1, 1);
+
         video.addEventListener(
             "loadeddata",
             function () {
@@ -421,7 +423,6 @@ function getCoordinates(img) {
 
     // scenario 1 - image is more vertical than canvas
     if (canvasRatio >= imageRatio) {
-        console.log("scenario 1");
         console.log(imageHeight, imageWidth, canvasRatio);
         var sx = 0;
         var sWidth = imageWidth;
@@ -430,7 +431,6 @@ function getCoordinates(img) {
     } else {
     // scenario 2 - image is more horizontal than canvas
         var sy = 0;
-        console.log("scenario 2");
         console.log(imageHeight, imageWidth, canvasRatio);
         var sHeight = imageHeight;
         var sWidth = sHeight * canvasRatio;
