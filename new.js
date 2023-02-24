@@ -379,7 +379,7 @@ function webcamInference() {
             var loopID = setInterval(function () {
         
                 var [sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight, scalingRatio] =
-                getCoordinates(img);
+                getCoordinates(video);
                 model.then(function (model) {
                 model.detect(video).then(function (predictions) {
                     ctx.drawImage(video, 0, 0, width, height, 0, 0, width, height);
