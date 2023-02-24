@@ -379,7 +379,7 @@ function webcamInference() {
             var loopID = setInterval(function () {
                 model.then(function (model) {
                 model.detect(video).then(function (predictions) {
-                    ctx.drawImage(video, 0, 0, width, height);
+                    ctx.drawImage(video, 0, 0, width, height, 0, 0, width, height);
 
                     ctx.beginPath();
 
