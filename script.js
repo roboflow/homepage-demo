@@ -93,6 +93,8 @@ for (var item in available_models) {
 var current_model_name = "microsoft-coco";
 const API_KEY = "rf_U7AD2Mxh39N7jQ3B6cP8xAyufLH3";
 const DETECT_API_KEY = "4l5zOVomQmkAqlTJPVKN";
+const CAMERA_ACCESS_URL = "https://uploads-ssl.webflow.com/5f6bc60e665f54545a1e52a5/63d40cd1de273045d359cf9a_camera-access2.png";
+const LOADING_URL = "https://uploads-ssl.webflow.com/5f6bc60e665f54545a1e52a5/63d40cd2210b56e0e33593c7_loading-camera2.gif";
 var current_model_version = 9;
 var webcamLoop = false;
 
@@ -182,6 +184,32 @@ function switchModel() {
     current_model_name = document.getElementById("model-select").value;
     current_model_version = available_models[current_model_name]["version"];
 
+    if (current_model_name == "microsoft-coco") {
+        document.getElementById("picture_canvas").style.display = "none";
+        document.getElementById("example_demo").style.display = "block";
+        document.getElementById("picture").style.display = "none";
+        // show video
+        document.getElementById("video").style.display = "block";
+        document.getElementById("video").play();
+        // hide command tray
+        document.getElementById("prechosen_images_parent").style.display = "none";
+    } else {
+        document.getElementById("picture_canvas").style.display = "none";
+        document.getElementById("example_demo").style.display = "none";
+        document.getElementById("picture").style.display = "block";
+        document
+        .getElementById("picture")
+        .addEventListener("dragover", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        document
+        .getElementById("picture")
+        .addEventListener("drop", processDrop);
+    }
+
+    // IF MODEL IS microsoft-coco, change 
+
     // change prechosen_images_parent srcs
     var prechosen_images = document.getElementById(
         "prechosen_images"
@@ -206,7 +234,7 @@ function switchModel() {
 
     if (webcamLoop) {
         setImageState(
-            "https://uploads-ssl.webflow.com/5f6bc60e665f54545a1e52a5/63d40cd2210b56e0e33593c7_loading-camera2.gif",
+            LOADING_URL,
             "video_canvas"
         );
     }
@@ -323,7 +351,7 @@ function drawBoundingBoxes(predictions, canvas, ctx, scalingRatio, sx, sy, fromD
 
 function webcamInference() {
     setImageState(
-        "https://uploads-ssl.webflow.com/5f6bc60e665f54545a1e52a5/63d40cd2210b56e0e33593c7_loading-camera2.gif",
+        LOADING_URL,
         "video_canvas"
     );
     webcamLoop = true;
@@ -393,7 +421,7 @@ function webcamInference() {
         .catch(function (err) {
         // replace with img
         setImageState(
-            "https://uploads-ssl.webflow.com/5f6bc60e665f54545a1e52a5/63d40cd1de273045d359cf9a_camera-access2.png"
+            CAMERA_ACCESS_URL
         );
         });
     }
@@ -439,6 +467,16 @@ function getCoordinates(img) {
     return [sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight, scalingRatio];
 }
 
+function getBase64Image(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
+    var canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+    var ctx = canvas.getContext("2d");
+    ctx.drawImage(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+    var dataURL = canvas.toDataURL("image/jpeg");
+    return dataURL;
+}
+
 function imageInference(e) {
     // replace canvas with image
     document.getElementById("picture").style.display = "none";
@@ -455,20 +493,24 @@ function imageInference(e) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     img.onload = function () {
+        setImageState(
+            LOADING_URL,
+            "picture_canvas"
+        );
     var [sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight, scalingRatio] =
         getCoordinates(img);
 
-    ctx.drawImage(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
-
-    var base64 = canvas.toDataURL("image/jpeg", 1.0);
+    var base64 = getBase64Image(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
 
     apiRequest(base64).then(function (predictions) {
         ctx.beginPath();
+        // draw image to canvas
+        ctx.drawImage(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
         var predictions = predictions.map(function (prediction) {
-        return {
-            bbox: { x: prediction.x, y: prediction.y, width: prediction.width, height: prediction.height},
-            class: prediction.class,
-            confidence: prediction.confidence,
+            return {
+                bbox: { x: prediction.x, y: prediction.y, width: prediction.width, height: prediction.height},
+                class: prediction.class,
+                confidence: prediction.confidence,
         }});
 
         drawBoundingBoxes(predictions, canvas, ctx, scalingRatio, sx, sy, true);
@@ -513,11 +555,15 @@ function processDrop(e) {
         img.onload = function () {
         var [sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight, scalingRatio] =
             getCoordinates(img);
+            setImageState(
+                LOADING_URL,
+                "picture_canvas"
+            );
 
-        ctx.drawImage(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
 
         model.then(function (model) {
             model.detect(img).then(function (predictions) {
+                ctx.drawImage(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
             ctx.beginPath();
             drawBoundingBoxes(predictions, canvas, ctx, scalingRatio, sx, sy);
             });
