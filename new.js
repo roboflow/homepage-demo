@@ -441,6 +441,7 @@ function webcamInference() {
           video.id = "video1";
           // hide video
           video.setAttribute("playsinline", "");
+          video.setAttribute("muted", "");
   
           // add after canvas
           document.getElementById("video_canvas").after(video);
