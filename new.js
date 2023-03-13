@@ -227,6 +227,8 @@ function switchModel() {
 
     if (document.getElementById("video1")) {
         document.getElementById("video1").style.display = "none";
+        // hide video_canvas
+        document.getElementById("video_canvas").style.display = "none";
     }
 
     if (current_model_name == "microsoft-coco") {
@@ -437,6 +439,7 @@ function webcamInference() {
             video = document.createElement("video");
             video.style.display = "none";
           }
+          console.log("has run video")
           video.srcObject = stream;
           video.id = "video1";
           // hide video
@@ -445,6 +448,7 @@ function webcamInference() {
   
           // add after canvas
           document.getElementById("video_canvas").after(video);
+          console.log("is going to play video")
   
           video.onloadedmetadata = function () {
               video.play();
