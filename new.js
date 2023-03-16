@@ -134,8 +134,6 @@ function detectFrame() {
             requestAnimationFrame(detectFrame);
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 drawBbox(ctx, video, predictions);
-                console.log(predictions)
-                // no_detection_count = drawB
             });
     } else {
         main_stream.getTracks().forEach(function(track) {
@@ -439,7 +437,6 @@ function webcamInference() {
             video = document.createElement("video");
             video.style.display = "none";
           }
-          console.log("has run video")
           video.srcObject = stream;
           video.id = "video1";
           // hide video
@@ -448,7 +445,6 @@ function webcamInference() {
   
           // add after canvas
           document.getElementById("video_canvas").after(video);
-          console.log("is going to play video")
   
           video.onloadedmetadata = function () {
               video.play();
@@ -488,7 +484,6 @@ function webcamInference() {
   
                   if (result) {
                       m.teardown();
-                      console.log("teardown");
                       // disable webcam
                       stream.getTracks().forEach(function (track) {
                           track.stop();
