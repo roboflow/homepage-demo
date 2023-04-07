@@ -1,3 +1,5 @@
+![Homepage demo banner](https://media.roboflow.com/inference-demo/rf-homepage-demo-banner.png?updatedAt=1680886879894)
+
 # Roboflow Homepage Demo
 
 This repository contains the code used to power the inference widget on the [Roboflow](https://roboflow.com) homepage, with some changes to make it more generic.
