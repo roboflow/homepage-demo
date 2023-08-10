@@ -627,7 +627,9 @@ function processDrop(e) {
     changeElementState(["picture", "example_demo", "video_canvas", "picture_canvas"], "none");
     // document.getElementById("picture_canvas").style.display = "block";
     // show loading image
-    document.getElementById("loading_picture").style.display = "block";
+    if (document.getElementById("loading_picture")) {
+        document.getElementById("loading_picture").style.display = "block";
+    }
 
     // clear canvas if necessary
     if (document.getElementById("picture_canvas").getContext) {
@@ -663,7 +665,9 @@ function processDrop(e) {
         var base64 = getBase64Image(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
 
         apiRequest(base64).then(function (predictions) {
-            document.getElementById("loading_picture").style.display = "none";
+            if (document.getElementById("loading_picture")) {
+                document.getElementById("loading_picture").style.display = "none";
+            }
             document.getElementById("picture_canvas").style.display = "block";
             ctx.drawImage(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
             var predictions = predictions.map(function (prediction) {
@@ -674,7 +678,7 @@ prediction.height},
                     confidence: prediction.confidence,
             }});
             ctx.beginPath();
-            drawBoundingBoxes(predictions, canvas, ctx, scalingRatio, sx, sy);
+            drawBoundingBoxes(predictions, canvas, ctx, scalingRatio, sx, sy, true);
             });
         };
         document
