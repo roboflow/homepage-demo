@@ -6,8 +6,8 @@ if (window.matchMedia("(max-width: 500px)").matches) {
   picture_canvas.width = width;
   picture_canvas.height = height;
 } else {
-  var width = 640;
-  var height = 480;
+    var width = 640; // default values, overwritten by incoming video dimensions 
+    var height = 480;
 }
 
 var color_choices = [
@@ -359,6 +359,11 @@ function webcamInference() {
       .then(function (stream) {
         // if video exists, show it
         // create video element
+        const settings = stream.getVideoTracks()[0].getSettings()
+        width = settings.width // override width and height with incoming video width and height
+        height = settings.height 
+        const videoAspectRatio = width / height
+
         var video = document.createElement("video");
         video.srcObject = stream;
         video.id = "video1";
@@ -375,41 +380,39 @@ function webcamInference() {
 
         ctx.scale(1, 1);
 
+
+        // setting the dimensions of video and canvas, doesn't need to be in video render loop 
+        // sWidth, sHeight, dx, dy are unused, but must be reset here because they are global variables
+        var [sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight, scalingRatio] = 
+        getCoordinates(video, videoAspectRatio);
+        canvas.width = dWidth;
+        canvas.style.width = dWidth + "px";
+        canvas.height = dHeight;
+        canvas.style.height = dHeight + "px";
+        setImageState(
+            LOADING_URL,
+            "video_canvas"
+        );
+        
         video.addEventListener(
-          "loadeddata",
-          function () {
-            var detectFrame = async () => {
-              if (modelWorkerId == null) return;
-              var [
-                sx,
-                sy,
-                sWidth,
-                sHeight,
-                dx,
-                dy,
-                dWidth,
-                dHeight,
-                scalingRatio,
-              ] = getCoordinates(video);
+            "loadeddata",
+            function () {
+            var loopID = setInterval(function () {
+                model.then(function (model) {
+                model.detect(video).then(function (predictions) {
+                    ctx.drawImage(video, 0, 0, width, height, 0, 0, dWidth, dHeight);
 
-              let predictions = await inferEngine.infer(
-                modelWorkerId,
-                new inferencejs.CVImage(video)
-              );
-              setTimeout(detectFrame, 1000 / 30);
-              ctx.drawImage(video, 0, 0, width, height, 0, 0, width, height);
+                    ctx.beginPath();
 
-              ctx.beginPath();
-
-              drawBoundingBoxes(predictions, canvas, ctx, scalingRatio, sx, sy);
-
-              if (!webcamLoop) {
-                clearInterval(loopID);
-              }
-            };
-            detectFrame();
-          },
-          false
+                    drawBoundingBoxes(predictions, canvas, ctx, scalingRatio, sx, sy);
+            
+                    if (!webcamLoop) {
+                        clearInterval(loopID);
+                    }
+                });
+                });
+            }, 1000 / 30);},
+            false
         );
       })
       .catch(function (err) {
@@ -419,36 +422,26 @@ function webcamInference() {
   }
 }
 
-function getCoordinates(img) {
-  var dx = 0;
-  var dy = 0;
-  var dWidth = 640;
-  var dHeight = 480;
+function getCoordinates(img, videoAspectRatio) {
 
-  var sy;
-  var sx;
-  var sWidth = 0;
-  var sHeight = 0;
+    var dx = 0;
+    var dy = 0;
+    var dWidth = 0; // we're going to dynamically set width based on video aspect ratio
+    var dHeight = 480; // assume fixed height of canvas
 
-  var imageWidth = img.width;
-  var imageHeight = img.height;
+    // sy and sx are the offset of the coordinates
+    var sy;
+    var sx;
+    var sWidth = img.width; // set to incoming image width
+    var sHeight = 0;
 
-  const canvasRatio = dWidth / dHeight;
-  const imageRatio = imageWidth / imageHeight;
-
-  // scenario 1 - image is more vertical than canvas
-  if (canvasRatio >= imageRatio) {
     var sx = 0;
-    var sWidth = imageWidth;
-    var sHeight = sWidth / canvasRatio;
-    var sy = (imageHeight - sHeight) / 2;
-  } else {
-    // scenario 2 - image is more horizontal than canvas
     var sy = 0;
-    var sHeight = imageHeight;
-    var sWidth = sHeight * canvasRatio;
-    var sx = (imageWidth - sWidth) / 2;
-  }
+
+    dWidth = dHeight * videoAspectRatio
+
+    // dWidth is width of the canvas we're drawing to
+    // sWidth is the width of the original image
 
   var scalingRatio = dWidth / sWidth;
 
@@ -469,6 +462,7 @@ function getBase64Image(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
   return dataURL;
 }
 
+// used in index.html
 function imageInference(e) {
   // replace canvas with image
   document.getElementById("picture").style.display = "none";
@@ -522,6 +516,8 @@ function imageInference(e) {
     });
   };
 }
+
+
 
 function processDrop(e) {
   e.preventDefault();
